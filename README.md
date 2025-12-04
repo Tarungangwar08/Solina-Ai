@@ -1,1 +1,1 @@
-# Solina-Ai
+# Solina AI
