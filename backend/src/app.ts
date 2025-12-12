@@ -1,7 +1,7 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { connectDatabase } from './config/database';
 import authRoutes from './routes/authRoutes';
 import chatRoutes from './routes/chatRoutes';
 import emotionRoutes from './routes/emotionRoutes';
@@ -43,16 +43,19 @@ app.get('/api/health', (req, res) => {
 // Error handling middleware
 app.use(errorHandler);
 
-// Database connection
-mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost:27017/solina-ai')
-  .then(() => {
-    console.log('✅ Connected to MongoDB');
+// Database connection and server start
+const startServer = async () => {
+  try {
+    await connectDatabase();
     app.listen(PORT, () => {
       console.log(`🚀 Server is running on http://localhost:${PORT}`);
     });
-  })
-  .catch(err => {
-    console.error('❌ Database connection error:', err);
-  });
+  } catch (error: any) {
+    console.error('❌ Failed to start server:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
 
 export default app;
