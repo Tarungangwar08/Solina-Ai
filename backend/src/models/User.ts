@@ -1,7 +1,9 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
 import bcrypt from 'bcryptjs';
+import sequelize from '../config/database';
 
-export interface IUser extends Document {
+interface UserAttributes {
+  id: string;
   email: string;
   password: string;
   name: string;
@@ -9,65 +11,86 @@ export interface IUser extends Document {
   language: string;
   subscriptionTier: 'free' | 'premium' | 'professional';
   avatar?: string;
-  createdAt: Date;
-  updatedAt: Date;
-  comparePassword(candidatePassword: string): Promise<boolean>;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-const userSchema = new Schema<IUser>({
-  email: {
-    type: String,
-    required: true,
-    unique: true,
-    lowercase: true,
-    trim: true
-  },
-  password: {
-    type: String,
-    required: true,
-    minlength: 6
-  },
-  name: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  ageGroup: {
-    type: String,
-    enum: ['13-17', '18-24', '25-34', '35-44', '45-54', '55+'],
-    default: '25-34'
-  },
-  language: {
-    type: String,
-    default: 'en'
-  },
-  subscriptionTier: {
-    type: String,
-    enum: ['free', 'premium', 'professional'],
-    default: 'free'
-  },
-  avatar: {
-    type: String,
-    default: ''
+interface UserCreationAttributes extends Optional<UserAttributes, 'id' | 'createdAt' | 'updatedAt' | 'ageGroup' | 'avatar'> {}
+
+class User extends Model<UserAttributes, UserCreationAttributes> implements UserAttributes {
+  public id!: string;
+  public email!: string;
+  public password!: string;
+  public name!: string;
+  public ageGroup?: string;
+  public language!: string;
+  public subscriptionTier!: 'free' | 'premium' | 'professional';
+  public avatar?: string;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+
+  public async comparePassword(candidatePassword: string): Promise<boolean> {
+    return bcrypt.compare(candidatePassword, this.password);
   }
-}, {
-  timestamps: true
-});
+}
 
-// Hash password before saving
-userSchema.pre('save', async function(next) {
-  if (!this.isModified('password')) return next();
-  
-  const salt = await bcrypt.genSalt(10);
-  this.password = await bcrypt.hash(this.password, salt);
-  next();
-});
-
-// Compare password method
-userSchema.methods.comparePassword = async function(candidatePassword: string): Promise<boolean> {
-  return bcrypt.compare(candidatePassword, this.password);
-};
-
-const User = mongoose.model<IUser>('User', userSchema);
+User.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+      validate: {
+        isEmail: true,
+      },
+    },
+    password: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    ageGroup: {
+      type: DataTypes.ENUM('13-17', '18-24', '25-34', '35-44', '45-54', '55+'),
+      defaultValue: '25-34',
+    },
+    language: {
+      type: DataTypes.STRING,
+      defaultValue: 'en',
+    },
+    subscriptionTier: {
+      type: DataTypes.ENUM('free', 'premium', 'professional'),
+      defaultValue: 'free',
+    },
+    avatar: {
+      type: DataTypes.STRING,
+      allowNull: true,
+    },
+  },
+  {
+    sequelize,
+    tableName: 'users',
+    timestamps: true,
+    hooks: {
+      beforeCreate: async (user: User) => {
+        if (user.password) {
+          user.password = await bcrypt.hash(user.password, 10);
+        }
+      },
+      beforeUpdate: async (user: User) => {
+        if (user.changed('password')) {
+          user.password = await bcrypt.hash(user.password, 10);
+        }
+      },
+    },
+  }
+);
 
 export default User;

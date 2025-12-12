@@ -1,42 +1,68 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
 
-export interface IJournalEntry extends Document {
-  userId: mongoose.Types.ObjectId;
+interface JournalEntryAttributes {
+  id: string;
+  userId: string;
   title: string;
   content: string;
   mood?: string;
   tags: string[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-const JournalEntrySchema = new Schema<IJournalEntry>({
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  content: {
-    type: String,
-    required: true
-  },
-  mood: {
-    type: String,
-    enum: ['amazing', 'good', 'okay', 'bad', 'terrible']
-  },
-  tags: [{
-    type: String,
-    trim: true
-  }]
-}, {
-  timestamps: true
-});
+interface JournalEntryCreationAttributes extends Optional<JournalEntryAttributes, 'id' | 'mood' | 'tags' | 'createdAt' | 'updatedAt'> {}
 
-const JournalEntry = mongoose.model<IJournalEntry>('JournalEntry', JournalEntrySchema);
+class JournalEntry extends Model<JournalEntryAttributes, JournalEntryCreationAttributes> implements JournalEntryAttributes {
+  public id!: string;
+  public userId!: string;
+  public title!: string;
+  public content!: string;
+  public mood?: string;
+  public tags!: string[];
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+JournalEntry.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    content: {
+      type: DataTypes.TEXT,
+      allowNull: false,
+    },
+    mood: {
+      type: DataTypes.ENUM('amazing', 'good', 'okay', 'bad', 'terrible'),
+      allowNull: true,
+    },
+    tags: {
+      type: DataTypes.ARRAY(DataTypes.STRING),
+      defaultValue: [],
+    },
+  },
+  {
+    sequelize,
+    tableName: 'journal_entries',
+    timestamps: true,
+  }
+);
 
 export default JournalEntry;

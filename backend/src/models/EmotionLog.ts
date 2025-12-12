@@ -1,38 +1,65 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
 
-export interface IEmotionLog extends Document {
-  userId: mongoose.Types.ObjectId;
+interface EmotionLogAttributes {
+  id: string;
+  userId: string;
   mood: string;
   moodScore: number;
   note?: string;
-  createdAt: Date;
+  createdAt?: Date;
 }
 
-const EmotionLogSchema = new Schema<IEmotionLog>({
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  mood: {
-    type: String,
-    required: true,
-    enum: ['amazing', 'good', 'okay', 'bad', 'terrible']
-  },
-  moodScore: {
-    type: Number,
-    required: true,
-    min: 1,
-    max: 5
-  },
-  note: {
-    type: String,
-    maxlength: 500
-  }
-}, {
-  timestamps: true
-});
+interface EmotionLogCreationAttributes extends Optional<EmotionLogAttributes, 'id' | 'note' | 'createdAt'> {}
 
-const EmotionLog = mongoose.model<IEmotionLog>('EmotionLog', EmotionLogSchema);
+class EmotionLog extends Model<EmotionLogAttributes, EmotionLogCreationAttributes> implements EmotionLogAttributes {
+  public id!: string;
+  public userId!: string;
+  public mood!: string;
+  public moodScore!: number;
+  public note?: string;
+  public readonly createdAt!: Date;
+}
+
+EmotionLog.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
+    mood: {
+      type: DataTypes.ENUM('amazing', 'good', 'okay', 'bad', 'terrible'),
+      allowNull: false,
+    },
+    moodScore: {
+      type: DataTypes.INTEGER,
+      allowNull: false,
+      validate: {
+        min: 1,
+        max: 5,
+      },
+    },
+    note: {
+      type: DataTypes.STRING(500),
+      allowNull: true,
+    },
+  },
+  {
+    sequelize,
+    tableName: 'emotion_logs',
+    timestamps: true,
+    updatedAt: false,
+  }
+);
 
 export default EmotionLog;

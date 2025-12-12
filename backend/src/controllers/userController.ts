@@ -5,7 +5,9 @@ import { AuthRequest } from '../types';
 // Get user profile
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    const user = await User.findById(req.user?.id).select('-password');
+    const user = await User.findByPk(req.user?.id, {
+      attributes: { exclude: ['password'] }
+    });
     
     if (!user) {
       res.status(404).json({ message: 'User not found' });
@@ -27,11 +29,19 @@ export const updateProfile = async (req: AuthRequest, res: Response): Promise<vo
   try {
     const { name, ageGroup, language, avatar } = req.body;
 
-    const user = await User.findByIdAndUpdate(
-      req.user?.id,
+    const [updated] = await User.update(
       { name, ageGroup, language, avatar },
-      { new: true, runValidators: true }
-    ).select('-password');
+      { where: { id: req.user?.id } }
+    );
+
+    if (!updated) {
+      res.status(404).json({ message: 'User not found' });
+      return;
+    }
+
+    const user = await User.findByPk(req.user?.id, {
+      attributes: { exclude: ['password'] }
+    });
 
     if (!user) {
       res.status(404).json({ message: 'User not found' });
@@ -53,7 +63,7 @@ export const updatePassword = async (req: AuthRequest, res: Response): Promise<v
   try {
     const { currentPassword, newPassword } = req.body;
 
-    const user = await User.findById(req.user?.id);
+    const user = await User.findByPk(req.user?.id);
     
     if (!user) {
       res.status(404).json({ message: 'User not found' });
@@ -82,7 +92,7 @@ export const updatePassword = async (req: AuthRequest, res: Response): Promise<v
 // Delete account
 export const deleteAccount = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
-    await User.findByIdAndDelete(req.user?.id);
+    await User.destroy({ where: { id: req.user?.id } });
 
     res.json({
       success: true,

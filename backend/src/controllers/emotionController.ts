@@ -13,14 +13,12 @@ export const logMood = async (req: AuthRequest, res: Response): Promise<void> =>
       return;
     }
 
-    const emotionLog = new EmotionLog({
+    const emotionLog = await EmotionLog.create({
       userId,
       mood,
       moodScore,
       note
     });
-
-    await emotionLog.save();
 
     res.status(201).json({
       success: true,
@@ -36,15 +34,23 @@ export const logMood = async (req: AuthRequest, res: Response): Promise<void> =>
 export const getMoodHistory = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
     const { days = 30 } = req.query;
 
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - Number(days));
 
-    const moodHistory = await EmotionLog.find({
-      userId,
-      createdAt: { $gte: startDate }
-    }).sort({ createdAt: -1 });
+    const moodHistory = await EmotionLog.findAll({
+      where: {
+        userId,
+        createdAt: { $gte: startDate }
+      },
+      order: [['createdAt', 'DESC']]
+    });
 
     // Calculate statistics
     const moodCounts: Record<string, number> = {};
@@ -87,9 +93,12 @@ export const getTodayMood = async (req: AuthRequest, res: Response): Promise<voi
     today.setHours(0, 0, 0, 0);
 
     const todayMood = await EmotionLog.findOne({
-      userId,
-      createdAt: { $gte: today }
-    }).sort({ createdAt: -1 });
+      where: {
+        userId,
+        createdAt: { $gte: today }
+      },
+      order: [['createdAt', 'DESC']]
+    });
 
     res.json({
       success: true,

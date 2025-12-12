@@ -1,4 +1,5 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
 
 export interface IMessageDoc {
   role: 'user' | 'assistant';
@@ -7,48 +8,56 @@ export interface IMessageDoc {
   createdAt: Date;
 }
 
-export interface IConversation extends Document {
-  userId: mongoose.Types.ObjectId;
+interface ConversationAttributes {
+  id: string;
+  userId: string;
   title: string;
   messages: IMessageDoc[];
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-const MessageSchema = new Schema<IMessageDoc>({
-  role: {
-    type: String,
-    enum: ['user', 'assistant'],
-    required: true
+interface ConversationCreationAttributes extends Optional<ConversationAttributes, 'id' | 'title' | 'messages' | 'createdAt' | 'updatedAt'> {}
+
+class Conversation extends Model<ConversationAttributes, ConversationCreationAttributes> implements ConversationAttributes {
+  public id!: string;
+  public userId!: string;
+  public title!: string;
+  public messages!: IMessageDoc[];
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Conversation.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
+    title: {
+      type: DataTypes.STRING,
+      defaultValue: 'New Conversation',
+    },
+    messages: {
+      type: DataTypes.JSONB,
+      defaultValue: [],
+    },
   },
-  content: {
-    type: String,
-    required: true
-  },
-  mood: {
-    type: String
-  },
-  createdAt: {
-    type: Date,
-    default: Date.now
+  {
+    sequelize,
+    tableName: 'conversations',
+    timestamps: true,
   }
-}, { _id: true });
-
-const ConversationSchema = new Schema<IConversation>({
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  title: {
-    type: String,
-    default: 'New Conversation'
-  },
-  messages: [MessageSchema]
-}, {
-  timestamps: true
-});
-
-const Conversation = mongoose.model<IConversation>('Conversation', ConversationSchema);
+);
 
 export default Conversation;

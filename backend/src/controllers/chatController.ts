@@ -17,26 +17,28 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
     }
 
     // Get user info for context
-    const user = await User.findById(userId);
+    const user = await User.findByPk(userId);
     if (!user) {
       res.status(404).json({ message: 'User not found' });
       return;
     }
 
     // Get recent moods for context
-    const recentMoods = await EmotionLog.find({ userId })
-      .sort({ createdAt: -1 })
-      .limit(5)
-      .select('mood');
+    const recentMoods = await EmotionLog.findAll({
+      where: { userId },
+      order: [['createdAt', 'DESC']],
+      limit: 5,
+      attributes: ['mood']
+    });
 
     let conversation;
     
     if (conversationId) {
-      conversation = await Conversation.findOne({ _id: conversationId, userId });
+      conversation = await Conversation.findOne({ where: { id: conversationId, userId } });
     }
 
     if (!conversation) {
-      conversation = new Conversation({
+      conversation = await Conversation.create({
         userId,
         title: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
         messages: []
@@ -78,7 +80,7 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
     res.json({
       success: true,
       conversation: {
-        id: conversation._id,
+        id: conversation.id,
         title: conversation.title,
         messages: conversation.messages
       },
@@ -96,10 +98,12 @@ export const getConversations = async (req: AuthRequest, res: Response): Promise
   try {
     const userId = req.user?.id;
 
-    const conversations = await Conversation.find({ userId })
-      .sort({ updatedAt: -1 })
-      .select('title createdAt updatedAt')
-      .limit(50);
+    const conversations = await Conversation.findAll({
+      where: { userId },
+      order: [['updatedAt', 'DESC']],
+      attributes: ['id', 'title', 'createdAt', 'updatedAt'],
+      limit: 50
+    });
 
     res.json({
       success: true,
@@ -117,7 +121,7 @@ export const getConversation = async (req: AuthRequest, res: Response): Promise<
     const { id } = req.params;
     const userId = req.user?.id;
 
-    const conversation = await Conversation.findOne({ _id: id, userId });
+    const conversation = await Conversation.findOne({ where: { id, userId } });
 
     if (!conversation) {
       res.status(404).json({ message: 'Conversation not found' });
@@ -140,9 +144,9 @@ export const deleteConversation = async (req: AuthRequest, res: Response): Promi
     const { id } = req.params;
     const userId = req.user?.id;
 
-    const conversation = await Conversation.findOneAndDelete({ _id: id, userId });
+    const deleted = await Conversation.destroy({ where: { id, userId } });
 
-    if (!conversation) {
+    if (!deleted) {
       res.status(404).json({ message: 'Conversation not found' });
       return;
     }

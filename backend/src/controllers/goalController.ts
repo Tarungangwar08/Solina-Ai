@@ -7,8 +7,12 @@ export const createGoal = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const { title, description, category, stressLevel, dueDate } = req.body;
     const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
 
-    const goal = new Goal({
+    const goal = await Goal.create({
       userId,
       title,
       description,
@@ -16,8 +20,6 @@ export const createGoal = async (req: AuthRequest, res: Response): Promise<void>
       stressLevel,
       dueDate
     });
-
-    await goal.save();
 
     res.status(201).json({
       success: true,
@@ -33,6 +35,11 @@ export const createGoal = async (req: AuthRequest, res: Response): Promise<void>
 export const getGoals = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
     const { completed } = req.query;
 
     const query: any = { userId };
@@ -40,7 +47,10 @@ export const getGoals = async (req: AuthRequest, res: Response): Promise<void> =
       query.completed = completed === 'true';
     }
 
-    const goals = await Goal.find(query).sort({ createdAt: -1 });
+    const goals = await Goal.findAll({
+      where: query,
+      order: [['createdAt', 'DESC']]
+    });
 
     res.json({
       success: true,
@@ -58,12 +68,22 @@ export const updateGoal = async (req: AuthRequest, res: Response): Promise<void>
     const { id } = req.params;
     const { title, description, category, stressLevel, progress, dueDate, completed } = req.body;
     const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
 
-    const goal = await Goal.findOneAndUpdate(
-      { _id: id, userId },
+    const [updated] = await Goal.update(
       { title, description, category, stressLevel, progress, dueDate, completed },
-      { new: true, runValidators: true }
+      { where: { id, userId } }
     );
+
+    if (!updated) {
+      res.status(404).json({ message: 'Goal not found' });
+      return;
+    }
+
+    const goal = await Goal.findOne({ where: { id, userId } });
 
     if (!goal) {
       res.status(404).json({ message: 'Goal not found' });
@@ -85,10 +105,14 @@ export const deleteGoal = async (req: AuthRequest, res: Response): Promise<void>
   try {
     const { id } = req.params;
     const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
 
-    const goal = await Goal.findOneAndDelete({ _id: id, userId });
+    const deleted = await Goal.destroy({ where: { id, userId } });
 
-    if (!goal) {
+    if (!deleted) {
       res.status(404).json({ message: 'Goal not found' });
       return;
     }

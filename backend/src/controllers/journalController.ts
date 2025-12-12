@@ -8,15 +8,18 @@ export const createEntry = async (req: AuthRequest, res: Response): Promise<void
     const { title, content, mood, tags } = req.body;
     const userId = req.user?.id;
 
-    const entry = new JournalEntry({
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
+    const entry = await JournalEntry.create({
       userId,
       title,
       content,
       mood,
       tags: tags || []
     });
-
-    await entry.save();
 
     res.status(201).json({
       success: true,
@@ -32,14 +35,19 @@ export const createEntry = async (req: AuthRequest, res: Response): Promise<void
 export const getEntries = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
     const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
+
     const { page = 1, limit = 10 } = req.query;
 
-    const entries = await JournalEntry.find({ userId })
-      .sort({ createdAt: -1 })
-      .skip((Number(page) - 1) * Number(limit))
-      .limit(Number(limit));
-
-    const total = await JournalEntry.countDocuments({ userId });
+    const { count: total, rows: entries } = await JournalEntry.findAndCountAll({
+      where: { userId },
+      order: [['createdAt', 'DESC']],
+      offset: (Number(page) - 1) * Number(limit),
+      limit: Number(limit)
+    });
 
     res.json({
       success: true,
@@ -62,8 +70,12 @@ export const getEntry = async (req: AuthRequest, res: Response): Promise<void> =
   try {
     const { id } = req.params;
     const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
 
-    const entry = await JournalEntry.findOne({ _id: id, userId });
+    const entry = await JournalEntry.findOne({ where: { id, userId } });
 
     if (!entry) {
       res.status(404).json({ message: 'Journal entry not found' });
@@ -86,12 +98,22 @@ export const updateEntry = async (req: AuthRequest, res: Response): Promise<void
     const { id } = req.params;
     const { title, content, mood, tags } = req.body;
     const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
 
-    const entry = await JournalEntry.findOneAndUpdate(
-      { _id: id, userId },
+    const [updated] = await JournalEntry.update(
       { title, content, mood, tags },
-      { new: true, runValidators: true }
+      { where: { id, userId } }
     );
+
+    if (!updated) {
+      res.status(404).json({ message: 'Journal entry not found' });
+      return;
+    }
+
+    const entry = await JournalEntry.findOne({ where: { id, userId } });
 
     if (!entry) {
       res.status(404).json({ message: 'Journal entry not found' });
@@ -113,10 +135,14 @@ export const deleteEntry = async (req: AuthRequest, res: Response): Promise<void
   try {
     const { id } = req.params;
     const userId = req.user?.id;
+    if (!userId) {
+      res.status(401).json({ message: 'Unauthorized' });
+      return;
+    }
 
-    const entry = await JournalEntry.findOneAndDelete({ _id: id, userId });
+    const deleted = await JournalEntry.destroy({ where: { id, userId } });
 
-    if (!entry) {
+    if (!deleted) {
       res.status(404).json({ message: 'Journal entry not found' });
       return;
     }

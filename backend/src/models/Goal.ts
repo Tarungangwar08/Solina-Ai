@@ -1,61 +1,90 @@
-import mongoose, { Document, Schema } from 'mongoose';
+import { DataTypes, Model, Optional } from 'sequelize';
+import sequelize from '../config/database';
 
-export interface IGoal extends Document {
-  userId: mongoose.Types.ObjectId;
+interface GoalAttributes {
+  id: string;
+  userId: string;
   title: string;
   description?: string;
   category: string;
-  stressLevel: string;
+  stressLevel: 'low' | 'medium' | 'high' | 'extreme';
   progress: number;
   dueDate?: Date;
   completed: boolean;
-  createdAt: Date;
-  updatedAt: Date;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-const GoalSchema = new Schema<IGoal>({
-  userId: {
-    type: Schema.Types.ObjectId,
-    ref: 'User',
-    required: true
-  },
-  title: {
-    type: String,
-    required: true,
-    trim: true
-  },
-  description: {
-    type: String,
-    trim: true
-  },
-  category: {
-    type: String,
-    required: true,
-    enum: ['health', 'work', 'personal', 'relationships', 'learning', 'finance', 'other'],
-    default: 'personal'
-  },
-  stressLevel: {
-    type: String,
-    enum: ['low', 'medium', 'high', 'extreme'],
-    default: 'low'
-  },
-  progress: {
-    type: Number,
-    min: 0,
-    max: 100,
-    default: 0
-  },
-  dueDate: {
-    type: Date
-  },
-  completed: {
-    type: Boolean,
-    default: false
-  }
-}, {
-  timestamps: true
-});
+interface GoalCreationAttributes extends Optional<GoalAttributes, 'id' | 'description' | 'dueDate' | 'progress' | 'completed' | 'createdAt' | 'updatedAt'> {}
 
-const Goal = mongoose.model<IGoal>('Goal', GoalSchema);
+class Goal extends Model<GoalAttributes, GoalCreationAttributes> implements GoalAttributes {
+  public id!: string;
+  public userId!: string;
+  public title!: string;
+  public description?: string;
+  public category!: string;
+  public stressLevel!: 'low' | 'medium' | 'high' | 'extreme';
+  public progress!: number;
+  public dueDate?: Date;
+  public completed!: boolean;
+  public readonly createdAt!: Date;
+  public readonly updatedAt!: Date;
+}
+
+Goal.init(
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      primaryKey: true,
+    },
+    userId: {
+      type: DataTypes.UUID,
+      allowNull: false,
+      references: {
+        model: 'users',
+        key: 'id',
+      },
+      onDelete: 'CASCADE',
+    },
+    title: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    description: {
+      type: DataTypes.TEXT,
+      allowNull: true,
+    },
+    category: {
+      type: DataTypes.ENUM('health', 'work', 'personal', 'relationships', 'learning', 'finance', 'other'),
+      defaultValue: 'personal',
+    },
+    stressLevel: {
+      type: DataTypes.ENUM('low', 'medium', 'high', 'extreme'),
+      defaultValue: 'low',
+    },
+    progress: {
+      type: DataTypes.INTEGER,
+      defaultValue: 0,
+      validate: {
+        min: 0,
+        max: 100,
+      },
+    },
+    dueDate: {
+      type: DataTypes.DATE,
+      allowNull: true,
+    },
+    completed: {
+      type: DataTypes.BOOLEAN,
+      defaultValue: false,
+    },
+  },
+  {
+    sequelize,
+    tableName: 'goals',
+    timestamps: true,
+  }
+);
 
 export default Goal;
