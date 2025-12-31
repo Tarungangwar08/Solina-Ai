@@ -1,6 +1,8 @@
 import { Response } from 'express';
 import User from '../models/User';
 import { AuthRequest } from '../types';
+import fs from 'fs';
+import path from 'path';
 
 // Get user profile
 export const getProfile = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -89,6 +91,71 @@ export const updatePassword = async (req: AuthRequest, res: Response): Promise<v
   }
 };
 
+// Upload avatar
+export const uploadAvatar = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    if (!req.file) {
+      res.status(400).json({ message: 'No file uploaded' });
+      return;
+    }
+
+    const avatarUrl = `/uploads/avatars/${req.file.filename}`;
+
+    // Delete old avatar if exists
+    const user = await User.findByPk(req.user?.id);
+    if (user?.avatar) {
+      const oldPath = path.join(__dirname, '../../', user.avatar);
+      if (fs.existsSync(oldPath)) {
+        fs.unlinkSync(oldPath);
+      }
+    }
+
+    // Update user avatar
+    await User.update({ avatar: avatarUrl }, { where: { id: req.user?.id } });
+
+    const updatedUser = await User.findByPk(req.user?.id, {
+      attributes: { exclude: ['password'] }
+    });
+
+    res.json({
+      success: true,
+      avatar: avatarUrl,
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Upload avatar error:', error);
+    res.status(500).json({ message: 'Error uploading avatar' });
+  }
+};
+
+// Delete avatar
+export const deleteAvatar = async (req: AuthRequest, res: Response): Promise<void> => {
+  try {
+    const user = await User.findByPk(req.user?.id);
+    
+    if (user?.avatar) {
+      const filePath = path.join(__dirname, '../../', user.avatar);
+      if (fs.existsSync(filePath)) {
+        fs.unlinkSync(filePath);
+      }
+      
+      await User.update({ avatar: undefined }, { where: { id: req.user?.id } });
+    }
+
+    const updatedUser = await User.findByPk(req.user?.id, {
+      attributes: { exclude: ['password'] }
+    });
+
+    res.json({
+      success: true,
+      user: updatedUser
+    });
+  } catch (error) {
+    console.error('Delete avatar error:', error);
+    res.status(500).json({ message: 'Error deleting avatar' });
+  }
+};
+
 // Delete account
 export const deleteAccount = async (req: AuthRequest, res: Response): Promise<void> => {
   try {
@@ -104,4 +171,4 @@ export const deleteAccount = async (req: AuthRequest, res: Response): Promise<vo
   }
 };
 
-export default { getProfile, updateProfile, updatePassword, deleteAccount };
+export default { getProfile, updateProfile, updatePassword, uploadAvatar, deleteAvatar, deleteAccount };

@@ -94,6 +94,16 @@ export const userAPI = {
     api.put('/user/profile', data),
   updatePassword: (data: { currentPassword: string; newPassword: string }) =>
     api.put('/user/password', data),
+  uploadAvatar: (file: File) => {
+    const formData = new FormData();
+    formData.append('avatar', file);
+    return api.post('/user/avatar', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+  },
+  deleteAvatar: () => api.delete('/user/avatar'),
   deleteAccount: () => api.delete('/user/account'),
 };
 

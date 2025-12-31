@@ -35,39 +35,49 @@ const DashboardLayout: React.FC = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-solina-bg-light flex">
+    <div className="min-h-screen bg-gradient-to-b from-indigo-900 via-purple-900 to-indigo-800 flex">
       {/* Mobile Sidebar Overlay */}
       {sidebarOpen && (
         <div
-          className="fixed inset-0 bg-black/30 z-40 lg:hidden"
+          className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40"
           onClick={() => setSidebarOpen(false)}
         />
       )}
 
       {/* Sidebar */}
       <aside
-        className={`fixed lg:static inset-y-0 left-0 z-50 w-72 bg-white shadow-medium transform transition-transform duration-300 ease-in-out ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+        className={`fixed inset-y-0 left-0 z-50 w-72 bg-white/10 backdrop-blur-xl border-r border-white/10 shadow-2xl transform transition-transform duration-300 ease-in-out ${
+          sidebarOpen ? 'translate-x-0' : '-translate-x-full'
         }`}
       >
         <div className="flex flex-col h-full">
           {/* Logo */}
-          <div className="p-6 border-b border-gray-100">
+          <div className="p-6 border-b border-white/10">
             <div className="flex items-center gap-3">
-              <LogoIcon size={40} />
-              <span className="text-lg font-semibold tracking-wide text-gray-600">SOLINA AI</span>
+              <div className="w-10 h-10 bg-white/10 backdrop-blur-sm rounded-lg flex items-center justify-center p-1.5">
+                <LogoIcon size={32} />
+              </div>
+              <span className="text-lg font-semibold tracking-wide text-white">SOLINA AI</span>
             </div>
           </div>
 
           {/* User Info */}
-          <div className="p-4 mx-4 mt-4 bg-gradient-soft rounded-xl">
+          <div className="p-4 mx-4 mt-4 bg-gradient-to-r from-purple-500/20 to-indigo-500/20 backdrop-blur-sm rounded-xl border border-white/20">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-gradient-primary rounded-full flex items-center justify-center text-white font-semibold">
-                {user?.name?.charAt(0).toUpperCase() || 'U'}
-              </div>
+              {user?.avatar ? (
+                <img
+                  src={`http://localhost:5000${user.avatar}`}
+                  alt={user.name}
+                  className="w-10 h-10 rounded-full object-cover border-2 border-white/30 shadow-lg"
+                />
+              ) : (
+                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-indigo-600 rounded-full flex items-center justify-center text-white font-semibold shadow-lg">
+                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+                </div>
+              )}
               <div>
-                <p className="font-medium text-gray-800">{user?.name || 'User'}</p>
-                <p className="text-sm text-gray-500">{user?.subscriptionTier || 'Free'} Plan</p>
+                <p className="font-medium text-white">{user?.name || 'User'}</p>
+                <p className="text-sm text-white/70">{user?.subscriptionTier || 'Free'} Plan</p>
               </div>
             </div>
           </div>
@@ -91,10 +101,10 @@ const DashboardLayout: React.FC = () => {
           </nav>
 
           {/* Logout Button */}
-          <div className="p-4 border-t border-gray-100">
+          <div className="p-4 border-t border-white/10">
             <button
               onClick={handleLogout}
-              className="sidebar-link w-full text-red-500 hover:bg-red-50 hover:text-red-600"
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-red-300 hover:bg-red-500/20 hover:text-red-200 transition-all duration-300 w-full"
             >
               <LogOut className="w-5 h-5" />
               <span>Logout</span>
@@ -106,17 +116,17 @@ const DashboardLayout: React.FC = () => {
       {/* Main Content */}
       <div className="flex-1 flex flex-col min-h-screen">
         {/* Top Bar */}
-        <header className="bg-white shadow-soft px-4 lg:px-8 py-4 flex items-center justify-between lg:justify-end">
+        <header className="bg-white/5 backdrop-blur-xl border-b border-white/10 px-4 lg:px-8 py-4 flex items-center justify-between">
           <button
-            className="lg:hidden p-2 rounded-lg hover:bg-gray-100"
+            className="p-2 rounded-lg hover:bg-white/10 text-white transition-all duration-300"
             onClick={() => setSidebarOpen(!sidebarOpen)}
           >
             {sidebarOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
           
           <div className="flex items-center gap-4">
-            <span className="text-sm text-gray-500">
-              Welcome back, <span className="font-medium text-solina-purple">{user?.name}</span>
+            <span className="text-sm text-white/70">
+              Welcome back, <span className="font-medium text-purple-300">{user?.name}</span>
             </span>
           </div>
         </header>

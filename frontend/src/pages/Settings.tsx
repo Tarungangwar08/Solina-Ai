@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { motion } from 'framer-motion';
 import {
   User,
@@ -13,20 +13,26 @@ import {
   Save,
   Eye,
   EyeOff,
-  Trash2
+  Trash2,
+  Camera,
+  Upload,
+  X
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { userAPI } from '../services/api';
 import toast from 'react-hot-toast';
 
 const SettingsPage: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user, logout, updateUser } = useAuth();
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'preferences'>('profile');
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Profile form
   const [name, setName] = useState(user?.name || '');
   const [email, setEmail] = useState(user?.email || '');
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar || '');
   const [savingProfile, setSavingProfile] = useState(false);
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   // Password form
   const [currentPassword, setCurrentPassword] = useState('');
@@ -113,6 +119,54 @@ const SettingsPage: React.FC = () => {
     }
   };
 
+  const handleAvatarClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB');
+      return;
+    }
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please upload an image file');
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      const res = await userAPI.uploadAvatar(file);
+      setAvatarUrl(res.data.avatar);
+      updateUser({ avatar: res.data.avatar });
+      toast.success('Profile picture updated successfully');
+    } catch (error) {
+      console.error('Error uploading avatar:', error);
+      toast.error('Failed to upload profile picture');
+    } finally {
+      setUploadingAvatar(false);
+    }
+  };
+
+  const handleDeleteAvatar = async () => {
+    if (!window.confirm('Are you sure you want to remove your profile picture?')) return;
+
+    try {
+      await userAPI.deleteAvatar();
+      setAvatarUrl('');
+      updateUser({ avatar: '' });
+      toast.success('Profile picture removed');
+    } catch (error) {
+      console.error('Error deleting avatar:', error);
+      toast.error('Failed to remove profile picture');
+    }
+  };
+
   const tabs = [
     { id: 'profile', label: 'Profile', icon: User },
     { id: 'security', label: 'Security', icon: Shield },
@@ -162,13 +216,52 @@ const SettingsPage: React.FC = () => {
             >
               <h2 className="text-lg font-semibold text-gray-800 mb-6">Profile Information</h2>
 
-              <div className="flex items-center gap-4 mb-6">
-                <div className="w-20 h-20 rounded-full bg-gradient-to-br from-solina-purple to-solina-gold flex items-center justify-center text-white text-2xl font-bold">
-                  {user?.name?.charAt(0).toUpperCase() || 'U'}
+              <div className="flex items-center gap-6 mb-6">
+                <div className="relative group">
+                  {avatarUrl ? (
+                    <img
+                      src={`http://localhost:5000${avatarUrl}`}
+                      alt="Profile"
+                      className="w-24 h-24 rounded-full object-cover border-4 border-purple-200"
+                    />
+                  ) : (
+                    <div className="w-24 h-24 rounded-full bg-gradient-to-br from-purple-600 to-indigo-600 flex items-center justify-center text-white text-3xl font-bold border-4 border-purple-200">
+                      {user?.name?.charAt(0).toUpperCase() || 'U'}
+                    </div>
+                  )}
+                  
+                  <button
+                    onClick={handleAvatarClick}
+                    disabled={uploadingAvatar}
+                    className="absolute bottom-0 right-0 p-2 bg-purple-600 rounded-full text-white hover:bg-purple-700 transition-colors shadow-lg"
+                  >
+                    {uploadingAvatar ? (
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    ) : (
+                      <Camera className="w-4 h-4" />
+                    )}
+                  </button>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                    className="hidden"
+                  />
                 </div>
-                <div>
-                  <p className="font-semibold text-gray-800">{user?.name}</p>
+                
+                <div className="flex-1">
+                  <p className="font-semibold text-gray-800 text-lg">{user?.name}</p>
                   <p className="text-gray-500">{user?.email}</p>
+                  {avatarUrl && (
+                    <button
+                      onClick={handleDeleteAvatar}
+                      className="mt-2 text-sm text-red-500 hover:text-red-700 flex items-center gap-1"
+                    >
+                      <X className="w-4 h-4" />
+                      Remove photo
+                    </button>
+                  )}
                 </div>
               </div>
 
