@@ -34,7 +34,13 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
     let conversation;
     
     if (conversationId) {
+      console.log(`Looking for conversation: ${conversationId} for user: ${userId}`);
       conversation = await Conversation.findOne({ where: { id: conversationId, userId } });
+      if (conversation) {
+        console.log(`Found existing conversation: ${conversation.id}`);
+      } else {
+        console.log(`Conversation not found, creating new one`);
+      }
     }
 
     if (!conversation) {
@@ -43,14 +49,16 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
         title: message.substring(0, 50) + (message.length > 50 ? '...' : ''),
         messages: []
       });
+      console.log(`Created new conversation: ${conversation.id}`);
     }
 
     // Add user message
-    conversation.messages.push({
-      role: 'user',
+    const updatedMessages = [...conversation.messages, {
+      role: 'user' as const,
       content: message,
       createdAt: new Date()
-    });
+    }];
+    conversation.messages = updatedMessages;
 
     // Prepare messages for AI
     const aiMessages = conversation.messages.map(msg => ({
@@ -68,21 +76,27 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
     const emotionAnalysis = analyzeEmotion(message);
 
     // Add AI response
-    conversation.messages.push({
-      role: 'assistant',
+    conversation.messages = [...conversation.messages, {
+      role: 'assistant' as const,
       content: aiResponse,
       mood: emotionAnalysis.mood,
       createdAt: new Date()
-    });
+    }];
 
+    // Mark messages field as changed for Sequelize
+    conversation.changed('messages', true);
     await conversation.save();
 
     res.json({
       success: true,
       conversation: {
+        _id: conversation.id,
         id: conversation.id,
         title: conversation.title,
-        messages: conversation.messages
+        messages: conversation.messages,
+        userId: conversation.userId,
+        createdAt: conversation.createdAt,
+        updatedAt: conversation.updatedAt
       },
       aiResponse,
       emotionAnalysis
@@ -107,7 +121,13 @@ export const getConversations = async (req: AuthRequest, res: Response): Promise
 
     res.json({
       success: true,
-      conversations
+      conversations: conversations.map(conv => ({
+        _id: conv.id,
+        id: conv.id,
+        title: conv.title,
+        createdAt: conv.createdAt,
+        updatedAt: conv.updatedAt
+      }))
     });
   } catch (error) {
     console.error('Get conversations error:', error);
@@ -130,7 +150,15 @@ export const getConversation = async (req: AuthRequest, res: Response): Promise<
 
     res.json({
       success: true,
-      conversation
+      conversation: {
+        _id: conversation.id,
+        id: conversation.id,
+        title: conversation.title,
+        messages: conversation.messages,
+        userId: conversation.userId,
+        createdAt: conversation.createdAt,
+        updatedAt: conversation.updatedAt
+      }
     });
   } catch (error) {
     console.error('Get conversation error:', error);

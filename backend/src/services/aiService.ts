@@ -6,6 +6,14 @@ interface Message {
   content: string;
 }
 
+// AWS Bedrock configuration
+const AWS_REGION = process.env.AWS_REGION || 'us-east-1';
+const AWS_ACCESS_KEY_ID = process.env.AWS_ACCESS_KEY_ID;
+const AWS_SECRET_ACCESS_KEY = process.env.AWS_SECRET_ACCESS_KEY;
+
+// Groq configuration (Free!)
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
+
 const SOLINA_SYSTEM_PROMPT = `You are Solina, a warm, empathetic, and supportive AI companion designed to provide emotional support and mental wellness guidance. 
 
 Your personality traits:
@@ -34,46 +42,172 @@ export const generateAIResponse = async (
   userContext?: UserContext
 ): Promise<string> => {
   try {
+    // Try Groq first (Free and fast!)
+    if (GROQ_API_KEY && GROQ_API_KEY !== 'your_groq_api_key_here') {
+      return await generateGroqResponse(messages, userContext);
+    }
+    
+    // Check if AWS Bedrock is configured
+    if (AWS_ACCESS_KEY_ID && AWS_SECRET_ACCESS_KEY && AWS_ACCESS_KEY_ID !== 'your_aws_access_key') {
+      return await generateBedrockResponse(messages, userContext);
+    }
+    
+    // Fallback to Anthropic API if configured
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    
-    if (!apiKey || apiKey === 'your_anthropic_api_key_here') {
-      return getFallbackResponse(messages[messages.length - 1]?.content || '');
+    if (apiKey && apiKey !== 'your_anthropic_api_key_here') {
+      return await generateAnthropicResponse(messages, userContext, apiKey);
     }
-
-    let systemPrompt = SOLINA_SYSTEM_PROMPT;
     
-    if (userContext) {
-      systemPrompt += `\n\nUser Context:
-- Name: ${userContext.name}
-${userContext.recentMoods?.length ? `- Recent moods: ${userContext.recentMoods.join(', ')}` : ''}
-${userContext.currentStressors?.length ? `- Current stressors: ${userContext.currentStressors.join(', ')}` : ''}`;
-    }
-
-    const response = await axios.post(
-      'https://api.anthropic.com/v1/messages',
-      {
-        model: 'claude-3-sonnet-20240229',
-        max_tokens: 1024,
-        system: systemPrompt,
-        messages: messages.map(msg => ({
-          role: msg.role,
-          content: msg.content
-        }))
-      },
-      {
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01'
-        }
-      }
-    );
-
-    return response.data.content[0].text;
+    // Use fallback responses if no API is configured
+    return getFallbackResponse(messages[messages.length - 1]?.content || '');
   } catch (error) {
     console.error('AI Service Error:', error);
     return getFallbackResponse(messages[messages.length - 1]?.content || '');
   }
+};
+
+// Groq implementation (FREE!)
+const generateGroqResponse = async (
+  messages: Message[],
+  userContext?: UserContext
+): Promise<string> => {
+  const Groq = require('groq-sdk');
+  
+  console.log('🟢 Using Groq API (Free)...');
+  
+  const groq = new Groq({
+    apiKey: GROQ_API_KEY
+  });
+
+  let systemPrompt = SOLINA_SYSTEM_PROMPT;
+  
+  if (userContext) {
+    systemPrompt += `\n\nUser Context:
+- Name: ${userContext.name}
+${userContext.recentMoods?.length ? `- Recent moods: ${userContext.recentMoods.join(', ')}` : ''}
+${userContext.currentStressors?.length ? `- Current stressors: ${userContext.currentStressors.join(', ')}` : ''}`;
+  }
+
+  const chatMessages = [
+    { role: 'system', content: systemPrompt },
+    ...messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }))
+  ];
+
+  const chatCompletion = await groq.chat.completions.create({
+    messages: chatMessages,
+    model: 'llama-3.3-70b-versatile', // Updated model (free, fast, high quality)
+    temperature: 0.7,
+    max_tokens: 1024,
+  });
+
+  console.log('✅ Groq response received!');
+  return chatCompletion.choices[0]?.message?.content || 'Sorry, I could not generate a response.';
+};
+
+// AWS Bedrock implementation (uses your AWS credits!)
+const generateBedrockResponse = async (
+  messages: Message[],
+  userContext?: UserContext
+): Promise<string> => {
+  const AWS = require('@aws-sdk/client-bedrock-runtime');
+  
+  console.log('🔵 Attempting AWS Bedrock call...');
+  console.log(`Region: ${AWS_REGION}`);
+  
+  const client = new AWS.BedrockRuntimeClient({
+    region: AWS_REGION,
+    credentials: {
+      accessKeyId: AWS_ACCESS_KEY_ID,
+      secretAccessKey: AWS_SECRET_ACCESS_KEY,
+    },
+  });
+
+  let systemPrompt = SOLINA_SYSTEM_PROMPT;
+  
+  if (userContext) {
+    systemPrompt += `\n\nUser Context:
+- Name: ${userContext.name}
+${userContext.recentMoods?.length ? `- Recent moods: ${userContext.recentMoods.join(', ')}` : ''}
+${userContext.currentStressors?.length ? `- Current stressors: ${userContext.currentStressors.join(', ')}` : ''}`;
+  }
+
+  // Using Claude 3 Haiku on AWS Bedrock (faster, available in more regions)
+  const payload = {
+    anthropic_version: "bedrock-2023-05-31",
+    max_tokens: 1024,
+    system: systemPrompt,
+    messages: messages.map(msg => ({
+      role: msg.role,
+      content: msg.content
+    }))
+  };
+
+  const modelId = "anthropic.claude-3-haiku-20240307-v1:0";
+  console.log(`Using model: ${modelId}`);
+
+  try {
+    const command = new AWS.InvokeModelCommand({
+      modelId: modelId,
+      contentType: "application/json",
+      accept: "application/json",
+      body: JSON.stringify(payload),
+    });
+
+    const response = await client.send(command);
+    const responseBody = JSON.parse(new TextDecoder().decode(response.body));
+    
+    console.log('✅ AWS Bedrock response received!');
+    return responseBody.content[0].text;
+  } catch (error: any) {
+    console.error('❌ AWS Bedrock Error:', error.message);
+    console.error('Error details:', {
+      name: error.name,
+      code: error.$metadata?.httpStatusCode,
+      region: AWS_REGION
+    });
+    throw error; // Re-throw to fallback to other methods
+  }
+};
+
+// Anthropic API implementation (fallback)
+const generateAnthropicResponse = async (
+  messages: Message[],
+  userContext: UserContext | undefined,
+  apiKey: string
+): Promise<string> => {
+  let systemPrompt = SOLINA_SYSTEM_PROMPT;
+  
+  if (userContext) {
+    systemPrompt += `\n\nUser Context:
+- Name: ${userContext.name}
+${userContext.recentMoods?.length ? `- Recent moods: ${userContext.recentMoods.join(', ')}` : ''}
+${userContext.currentStressors?.length ? `- Current stressors: ${userContext.currentStressors.join(', ')}` : ''}`;
+  }
+
+  const response = await axios.post(
+    'https://api.anthropic.com/v1/messages',
+    {
+      model: 'claude-3-sonnet-20240229',
+      max_tokens: 1024,
+      system: systemPrompt,
+      messages: messages.map(msg => ({
+        role: msg.role,
+        content: msg.content
+      }))
+    },
+    {
+      headers: {
+        'Content-Type': 'application/json',
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01'
+      }
+    }
+  );
+
+  return response.data.content[0].text;
 };
 
 const getFallbackResponse = (userMessage: string): string => {
