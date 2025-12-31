@@ -100,7 +100,7 @@ const DashboardHome: React.FC = () => {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-primary rounded-3xl p-8 text-white"
+        className="bg-gradient-to-r from-purple-600 via-indigo-600 to-purple-700 rounded-3xl p-8 text-white shadow-2xl"
       >
         <h1 className="text-2xl md:text-3xl font-bold mb-2">
           {getGreeting()}, {user?.name?.split(' ')[0]}! 👋
@@ -118,11 +118,11 @@ const DashboardHome: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="card"
+            className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-xl p-6 border border-white/20"
           >
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-xl font-semibold text-gray-800">Daily Mood Check</h2>
-              <span className="text-sm text-gray-500 flex items-center gap-2">
+              <h2 className="text-xl font-semibold text-white">Daily Mood Check</h2>
+              <span className="text-sm text-white/70 flex items-center gap-2">
                 <Calendar className="w-4 h-4" />
                 {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric' })}
               </span>
@@ -131,14 +131,14 @@ const DashboardHome: React.FC = () => {
             {todayMoodLogged ? (
               <div className="text-center py-8">
                 <div className="text-6xl mb-4">{selectedMood && moodEmojis[selectedMood]?.emoji}</div>
-                <p className="text-gray-600">You're feeling <span className="font-medium text-solina-purple">{selectedMood}</span> today</p>
-                <Link to="/dashboard/insights" className="text-solina-purple hover:underline text-sm mt-2 inline-block">
+                <p className="text-white/80">You're feeling <span className="font-medium text-purple-300">{selectedMood}</span> today</p>
+                <Link to="/dashboard/insights" className="text-purple-300 hover:text-purple-200 text-sm mt-2 inline-block">
                   View your mood history →
                 </Link>
               </div>
             ) : (
               <>
-                <p className="text-gray-600 mb-4">How are you feeling right now?</p>
+                <p className="text-white/80 mb-4">How are you feeling right now?</p>
                 <div className="flex justify-center gap-4 mb-6">
                   {(Object.entries(moodEmojis) as [MoodType, typeof moodEmojis[MoodType]][]).map(([mood, { emoji, label, color }]) => (
                     <button
@@ -183,18 +183,18 @@ const DashboardHome: React.FC = () => {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
           >
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">Quick Actions</h2>
+            <h2 className="text-xl font-semibold text-white mb-4">Quick Actions</h2>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               {quickActions.map((action, index) => (
                 <Link
                   key={index}
                   to={action.to}
-                  className="card hover:scale-105 text-center group"
+                  className="bg-white/10 backdrop-blur-xl border border-white/20 rounded-2xl shadow-lg hover:shadow-2xl p-6 hover:scale-105 transition-all duration-300 text-center group"
                 >
-                  <div className={`w-12 h-12 ${action.color} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform`}>
+                  <div className={`w-12 h-12 ${action.color} rounded-xl flex items-center justify-center mx-auto mb-3 group-hover:scale-110 transition-transform shadow-lg`}>
                     <action.icon className="w-6 h-6 text-white" />
                   </div>
-                  <p className="text-sm font-medium text-gray-700">{action.label}</p>
+                  <p className="text-sm font-medium text-white">{action.label}</p>
                 </Link>
               ))}
             </div>
@@ -208,18 +208,18 @@ const DashboardHome: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.3 }}
-            className="card-gradient"
+            className="bg-gradient-to-br from-purple-500 via-indigo-600 to-purple-700 rounded-2xl p-6 shadow-2xl border border-white/20"
           >
             <div className="flex items-center gap-3 mb-4">
-              <div className="w-12 h-12 bg-gradient-primary rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-full flex items-center justify-center shadow-lg">
                 <Sparkles className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h3 className="font-semibold text-gray-800">Talk to Solina</h3>
-                <p className="text-sm text-gray-500">I'm here to listen 💜</p>
+                <h3 className="font-semibold text-white">Talk to Solina</h3>
+                <p className="text-sm text-white/80">I'm here to listen 💜</p>
               </div>
             </div>
-            <Link to="/dashboard/chat" className="btn-primary w-full text-center block">
+            <Link to="/dashboard/chat" className="bg-white text-purple-900 font-bold py-3 px-6 rounded-full hover:shadow-2xl transform hover:scale-105 transition-all duration-300 w-full text-center block">
               Start Conversation
             </Link>
           </motion.div>
@@ -229,11 +229,11 @@ const DashboardHome: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="card"
+            className="bg-white/10 backdrop-blur-xl rounded-2xl shadow-xl p-6 border border-white/20"
           >
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-semibold text-gray-800">Recent Conversations</h3>
-              <Link to="/dashboard/chat" className="text-solina-purple text-sm hover:underline">
+              <h3 className="font-semibold text-white">Recent Conversations</h3>
+              <Link to="/dashboard/chat" className="text-purple-300 text-sm hover:text-purple-200">
                 View all
               </Link>
             </div>
@@ -244,36 +244,35 @@ const DashboardHome: React.FC = () => {
                   <Link
                     key={conv._id}
                     to={`/dashboard/chat/${conv._id}`}
-                    className="block p-3 rounded-xl hover:bg-gray-50 transition-colors group"
+                    className="block p-3 rounded-xl hover:bg-white/10 transition-colors group"
                   >
                     <div className="flex items-center justify-between">
-                      <p className="text-sm font-medium text-gray-700 truncate flex-1">
+                      <p className="text-sm font-medium text-white/90 truncate flex-1">
                         {conv.title}
                       </p>
-                      <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-solina-purple" />
+                      <ChevronRight className="w-4 h-4 text-white/50 group-hover:text-purple-300" />
                     </div>
-                    <p className="text-xs text-gray-400 mt-1">
+                    <p className="text-xs text-white/60 mt-1">
                       {new Date(conv.updatedAt).toLocaleDateString()}
                     </p>
                   </Link>
                 ))}
               </div>
             ) : (
-              <p className="text-gray-500 text-sm text-center py-4">
+              <p className="text-white/60 text-sm text-center py-4">
                 No conversations yet. Start chatting with Solina!
               </p>
-            )}
-          </motion.div>
+            )}          </motion.div>
 
           {/* Wellness Tip */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="card bg-solina-mint/10"
+            className="bg-gradient-to-br from-emerald-500/20 to-teal-500/20 backdrop-blur-xl rounded-2xl p-6 shadow-xl border border-white/20"
           >
-            <h3 className="font-semibold text-gray-800 mb-2">💡 Wellness Tip</h3>
-            <p className="text-sm text-gray-600">
+            <h3 className="font-semibold text-white mb-2">💡 Wellness Tip</h3>
+            <p className="text-sm text-white/80">
               Take a few deep breaths right now. Inhale for 4 counts, hold for 4, exhale for 4. 
               This simple exercise can help reduce stress and bring clarity.
             </p>
