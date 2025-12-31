@@ -142,7 +142,7 @@ export const googleAuth = async (req: Request, res: Response): Promise<void> => 
 
     const email = payload.email;
     const name = payload.name || '';
-    const avatar = payload.picture || null;
+    const avatar = payload.picture || undefined;
 
     // Find or create user
     let user = await User.findOne({ where: { email } });
