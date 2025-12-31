@@ -23,7 +23,10 @@ export const createGoal = async (req: AuthRequest, res: Response): Promise<void>
 
     res.status(201).json({
       success: true,
-      goal
+      goal: {
+        _id: goal.id,
+        ...goal.toJSON()
+      }
     });
   } catch (error) {
     console.error('Create goal error:', error);
@@ -54,7 +57,10 @@ export const getGoals = async (req: AuthRequest, res: Response): Promise<void> =
 
     res.json({
       success: true,
-      goals
+      goals: goals.map(goal => ({
+        _id: goal.id,
+        ...goal.toJSON()
+      }))
     });
   } catch (error) {
     console.error('Get goals error:', error);
@@ -92,7 +98,10 @@ export const updateGoal = async (req: AuthRequest, res: Response): Promise<void>
 
     res.json({
       success: true,
-      goal
+      goal: {
+        _id: goal.id,
+        ...goal.toJSON()
+      }
     });
   } catch (error) {
     console.error('Update goal error:', error);
