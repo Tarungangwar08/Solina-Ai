@@ -68,24 +68,26 @@ const InsightsPage: React.FC = () => {
   const trend = getMoodTrend();
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold text-gray-800">Mood Insights</h1>
-          <p className="text-gray-500">Track your emotional patterns over time</p>
+          <h1 className="text-3xl font-bold bg-gradient-to-r from-purple-600 to-indigo-600 bg-clip-text text-transparent">
+            Mood Insights
+          </h1>
+          <p className="text-gray-600 mt-1">Track your emotional patterns over time</p>
         </div>
 
         {/* Time Period Selector */}
-        <div className="flex bg-gray-100 rounded-xl p-1">
+        <div className="flex bg-gradient-to-r from-purple-100 to-indigo-100 rounded-2xl p-1.5">
           {[7, 14, 30].map((days) => (
             <button
               key={days}
               onClick={() => setSelectedDays(days)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+              className={`px-6 py-2.5 rounded-xl text-sm font-semibold transition-all ${
                 selectedDays === days
-                  ? 'bg-white text-solina-purple shadow-sm'
-                  : 'text-gray-600 hover:text-gray-800'
+                  ? 'bg-gradient-to-r from-purple-600 to-indigo-600 text-white shadow-lg shadow-purple-500/30'
+                  : 'text-purple-700 hover:text-purple-900'
               }`}
             >
               {days} Days
@@ -96,7 +98,7 @@ const InsightsPage: React.FC = () => {
 
       {loading ? (
         <div className="flex items-center justify-center h-64">
-          <div className="w-10 h-10 border-4 border-solina-purple border-t-transparent rounded-full animate-spin" />
+          <div className="w-12 h-12 border-4 border-purple-600 border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <>
@@ -105,27 +107,27 @@ const InsightsPage: React.FC = () => {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
-              className="card"
+              className="bg-gradient-to-br from-purple-500 to-indigo-600 rounded-2xl p-6 shadow-xl"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-500 text-sm">Total Entries</span>
-                <Calendar className="w-5 h-5 text-solina-purple" />
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white/80 text-sm font-medium">Total Entries</span>
+                <Calendar className="w-5 h-5 text-white" />
               </div>
-              <p className="text-2xl font-bold text-gray-800">{statistics?.total || 0}</p>
+              <p className="text-3xl font-bold text-white">{statistics?.total || 0}</p>
             </motion.div>
 
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.1 }}
-              className="card"
+              className="bg-gradient-to-br from-indigo-500 to-purple-600 rounded-2xl p-6 shadow-xl"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-500 text-sm">Average Mood</span>
-                <BarChart3 className="w-5 h-5 text-solina-gold" />
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white/80 text-sm font-medium">Average Mood</span>
+                <BarChart3 className="w-5 h-5 text-white" />
               </div>
-              <p className="text-2xl font-bold text-gray-800">
-                {statistics?.averageScore || '-'}/5
+              <p className="text-3xl font-bold text-white">
+                {statistics?.averageScore ? statistics.averageScore.toFixed(1) : '-'}/5
               </p>
             </motion.div>
 
@@ -133,19 +135,19 @@ const InsightsPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              className="card"
+              className="bg-gradient-to-br from-purple-600 to-pink-500 rounded-2xl p-6 shadow-xl"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-500 text-sm">Trend</span>
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white/80 text-sm font-medium">Trend</span>
                 {trend === 'up' ? (
-                  <TrendingUp className="w-5 h-5 text-green-500" />
+                  <TrendingUp className="w-5 h-5 text-white" />
                 ) : trend === 'down' ? (
-                  <TrendingDown className="w-5 h-5 text-red-500" />
+                  <TrendingDown className="w-5 h-5 text-white" />
                 ) : (
-                  <div className="w-5 h-1 bg-gray-400 rounded" />
+                  <div className="w-5 h-1 bg-white/50 rounded" />
                 )}
               </div>
-              <p className="text-2xl font-bold text-gray-800 capitalize">
+              <p className="text-2xl font-bold text-white capitalize">
                 {trend || 'No data'}
               </p>
             </motion.div>
@@ -154,17 +156,17 @@ const InsightsPage: React.FC = () => {
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.3 }}
-              className="card"
+              className="bg-gradient-to-br from-pink-500 to-purple-600 rounded-2xl p-6 shadow-xl"
             >
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-gray-500 text-sm">Most Common</span>
-                <span className="text-2xl">
+              <div className="flex items-center justify-between mb-3">
+                <span className="text-white/80 text-sm font-medium">Most Common</span>
+                <span className="text-3xl">
                   {statistics?.moodCounts
                     ? moodEmojis[Object.entries(statistics.moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] as MoodType] || '📊'
                     : '📊'}
                 </span>
               </div>
-              <p className="text-lg font-bold text-gray-800 capitalize">
+              <p className="text-xl font-bold text-white capitalize">
                 {statistics?.moodCounts
                   ? Object.entries(statistics.moodCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || '-'
                   : '-'}
@@ -177,9 +179,9 @@ const InsightsPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="card"
+            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-purple-100"
           >
-            <h2 className="text-lg font-semibold text-gray-800 mb-6">Weekly Mood Trend</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-6">Weekly Mood Trend</h2>
             
             {statistics?.weeklyData && statistics.weeklyData.length > 0 ? (
               <div className="h-72">
@@ -199,10 +201,10 @@ const InsightsPage: React.FC = () => {
                     <Line
                       type="monotone"
                       dataKey="score"
-                      stroke="#9B7EBD"
+                      stroke="#9333ea"
                       strokeWidth={3}
-                      dot={{ fill: '#9B7EBD', strokeWidth: 2 }}
-                      activeDot={{ r: 6, fill: '#F5D061' }}
+                      dot={{ fill: '#9333ea', strokeWidth: 2, r: 5 }}
+                      activeDot={{ r: 8, fill: '#c026d3', stroke: '#fff', strokeWidth: 2 }}
                     />
                   </LineChart>
                 </ResponsiveContainer>
@@ -219,9 +221,9 @@ const InsightsPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5 }}
-            className="card"
+            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-purple-100"
           >
-            <h2 className="text-lg font-semibold text-gray-800 mb-6">Mood Distribution</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-6">Mood Distribution</h2>
             
             {statistics?.moodCounts && Object.keys(statistics.moodCounts).length > 0 ? (
               <div className="grid grid-cols-5 gap-4">
@@ -231,17 +233,17 @@ const InsightsPage: React.FC = () => {
                   
                   return (
                     <div key={mood} className="text-center">
-                      <div className="text-3xl mb-2">{moodEmojis[mood]}</div>
-                      <div className="h-24 bg-gray-100 rounded-lg relative overflow-hidden">
+                      <div className="text-4xl mb-3">{moodEmojis[mood]}</div>
+                      <div className="h-32 bg-gradient-to-b from-purple-100 to-indigo-100 rounded-xl relative overflow-hidden border border-purple-200">
                         <motion.div
                           initial={{ height: 0 }}
                           animate={{ height: `${percentage}%` }}
                           transition={{ duration: 0.5, delay: 0.2 }}
-                          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-solina-purple to-solina-purple-light rounded-lg"
+                          className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-purple-600 to-indigo-500 rounded-xl"
                         />
                       </div>
-                      <p className="text-sm font-medium text-gray-600 mt-2 capitalize">{mood}</p>
-                      <p className="text-xs text-gray-400">{count} times</p>
+                      <p className="text-sm font-semibold text-gray-700 mt-3 capitalize">{mood}</p>
+                      <p className="text-xs text-gray-500">{count} times ({percentage.toFixed(0)}%)</p>
                     </div>
                   );
                 })}
@@ -258,25 +260,25 @@ const InsightsPage: React.FC = () => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.6 }}
-            className="card"
+            className="bg-white/80 backdrop-blur-sm rounded-2xl p-6 shadow-xl border border-purple-100"
           >
-            <h2 className="text-lg font-semibold text-gray-800 mb-4">Recent Mood Entries</h2>
+            <h2 className="text-xl font-bold text-gray-800 mb-4">Recent Mood Entries</h2>
             
             {moodHistory.length > 0 ? (
-              <div className="space-y-3">
+              <div className="space-y-2">
                 {moodHistory.slice(0, 10).map((entry) => (
                   <div
                     key={entry._id}
-                    className="flex items-center gap-4 p-3 bg-gray-50 rounded-xl"
+                    className="flex items-center gap-4 p-4 bg-gradient-to-r from-purple-50 to-indigo-50 rounded-xl border border-purple-100 hover:border-purple-300 transition-all"
                   >
-                    <span className="text-2xl">{moodEmojis[entry.mood]}</span>
+                    <span className="text-3xl">{moodEmojis[entry.mood]}</span>
                     <div className="flex-1">
-                      <p className="font-medium text-gray-800 capitalize">{entry.mood}</p>
+                      <p className="font-semibold text-gray-800 capitalize">{entry.mood}</p>
                       {entry.note && (
-                        <p className="text-sm text-gray-500 truncate">{entry.note}</p>
+                        <p className="text-sm text-gray-600 truncate">{entry.note}</p>
                       )}
                     </div>
-                    <span className="text-sm text-gray-400">
+                    <span className="text-sm text-gray-500 font-medium">
                       {new Date(entry.createdAt).toLocaleDateString()}
                     </span>
                   </div>
