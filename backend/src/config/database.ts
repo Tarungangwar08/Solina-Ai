@@ -42,7 +42,7 @@ export const connectDatabase = async () => {
     console.log('✅ PostgreSQL connected successfully');
     
     // Sync database tables
-    await sequelize.sync({ alter: true });
+    // await sequelize.sync({ alter: true }); // disabled — tables already created via init.sql
     console.log('✅ Database tables synchronized');
   } catch (error) {
     console.error('❌ PostgreSQL connection error:', error);
