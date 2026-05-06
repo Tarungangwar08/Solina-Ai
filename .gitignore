@@ -21,3 +21,6 @@ coverage/
 # User uploads (profile pictures)
 backend/uploads/avatars/*
 !backend/uploads/avatars/.gitkeep
+# Backup files
+*.backup
+*.backup.*
