@@ -100,7 +100,7 @@ const GoalsPage: React.FC = () => {
         title,
         description,
         category,
-        stressLevel,
+        stressLevel: typeof stressLevel === 'number' ? stressLevel : Number(stressLevel),
         dueDate: dueDate || undefined
       };
 

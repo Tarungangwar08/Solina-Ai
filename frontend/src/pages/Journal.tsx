@@ -59,7 +59,7 @@ const JournalPage: React.FC = () => {
       setSelectedEntry(entry);
       setTitle(entry.title);
       setContent(entry.content);
-      setMood(entry.mood);
+      setMood(entry.mood || 'okay');
       setTags(entry.tags || []);
     } else {
       setSelectedEntry(null);
@@ -209,7 +209,7 @@ const JournalPage: React.FC = () => {
               <div className="flex items-start justify-between">
                 <div className="flex-1">
                   <div className="flex items-center gap-3 mb-2">
-                    <span className="text-2xl">{moodEmojis[entry.mood]}</span>
+                    <span className="text-2xl">{moodEmojis[entry.mood || 'okay']}</span>
                     <h3 className="text-lg font-semibold text-gray-800">{entry.title}</h3>
                   </div>
                   <p className="text-gray-600 line-clamp-2 mb-3">{entry.content}</p>

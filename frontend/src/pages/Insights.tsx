@@ -127,7 +127,7 @@ const InsightsPage: React.FC = () => {
                 <BarChart3 className="w-5 h-5 text-white" />
               </div>
               <p className="text-3xl font-bold text-white">
-                {statistics?.averageScore ? statistics.averageScore.toFixed(1) : '-'}/5
+                {statistics?.averageScore ? Number(statistics.averageScore).toFixed(1) : '-'}/5
               </p>
             </motion.div>
 
