@@ -4,6 +4,7 @@ import User from '../models/User';
 import EmotionLog from '../models/EmotionLog';
 import { AuthRequest } from '../types';
 import { generateAIResponse, analyzeEmotion } from '../services/aiService';
+import { detectCrisis, getCrisisResponse } from '../services/safetyService';
 
 // Send a message and get AI response
 export const sendMessage = async (req: AuthRequest, res: Response): Promise<void> => {
@@ -66,11 +67,22 @@ export const sendMessage = async (req: AuthRequest, res: Response): Promise<void
       content: msg.content
     }));
 
-    // Generate AI response
-    const aiResponse = await generateAIResponse(aiMessages, {
-      name: user.name,
-      recentMoods: recentMoods.map(m => m.mood)
-    });
+    // ===== Layer 1: Deterministic crisis detection =====
+    // Runs BEFORE the LLM call so safety resources are guaranteed
+    // even if the LLM has a bad day or is bypassed by prompt injection.
+    const crisisResult = detectCrisis(message);
+
+    let aiResponse: string;
+    if (crisisResult.isCrisis) {
+      console.log(`🚨 Crisis detected (${crisisResult.severity}) for user ${userId} — patterns: ${crisisResult.matchedPatterns.join(', ')}`);
+      aiResponse = getCrisisResponse(crisisResult.severity);
+    } else {
+      // Normal flow — pass to LLM (which has Layer 2 system-prompt safety)
+      aiResponse = await generateAIResponse(aiMessages, {
+        name: user.name,
+        recentMoods: recentMoods.map(m => m.mood)
+      });
+    }
 
     // Analyze emotion from user message
     const emotionAnalysis = analyzeEmotion(message);
